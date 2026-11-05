@@ -1,9 +1,10 @@
 name: Client startup smoke (Minecraft 26.2)
 
 on:
+  pull_request:
   push:
     branches:
-      - fix/26.2-camera-runtime
+      - main
   workflow_dispatch:
 
 jobs:
