@@ -1,0 +1,72 @@
+name: Client startup smoke (Minecraft 26.2)
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.7.1'
+      - name: Start the Minecraft client in a virtual display
+        shell: bash
+        run: |
+          # This checks that mixins actually apply at client startup.
+          # The test does not interact with the UI or enter a world.
+          if ! command -v xvfb-run >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y xvfb
+          fi
+          set +e
+          timeout --signal=TERM --kill-after=10s 150s \
+            xvfb-run -a -s "-screen 0 1280x720x24" \
+            gradle runClient --no-daemon > client-startup.log 2>&1
+          status=$?
+          set -e
+          echo "Gradle exit status: $status"
+          echo '=== Minecraft startup: first 130 lines ==='
+          head -n 130 client-startup.log || true
+          echo '=== Errors in launcher log ==='
+          grep -Ein 'Caused by|Exception|Mixin apply|Critical injection|GLFW|Unable to|error:' client-startup.log | head -n 80 || true
+          echo '=== Crash report excerpt ==='
+          for report in run/crash-reports/crash-*.txt; do
+            if [[ -f "$report" ]]; then
+              head -n 130 "$report"
+            fi
+          done
+          echo '=== Minecraft startup: last 25 lines ==='
+          tail -n 25 client-startup.log || true
+          # Any early crash or mixin target mismatch fails.
+          if grep -Eiq 'Mixin apply for mod pairedanimations failed|Critical injection failure|Exception in thread.*main|Minecraft has crashed|Game crashed' client-startup.log; then
+            echo "Client startup crashed" >&2
+            exit 1
+          fi
+          # Reaching game initialization and a working rendering backend verifies
+          # that Camera was loaded and its mixins were applied without the old crash.
+          if grep -Eq 'Setting user:|Setting user ' client-startup.log \
+              && grep -Eq 'Backend library:|Using graphics backend' client-startup.log; then
+            echo "PASS: Minecraft reached renderer initialization without mixin crash."
+            exit 0
+          fi
+          echo "Could not verify client startup (possibly setup/download/display failure)." >&2
+          exit 1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: PairedAnimations-26.2-startup-log
+          path: client-startup.log
+          if-no-files-found: warn

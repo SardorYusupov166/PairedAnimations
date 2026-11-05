@@ -1,40 +1,37 @@
-# PairedAnimations — Minecraft **26.2** (Fabric)
+# PairedAnimations — Minecraft 26.2 (Fabric)
 
-**Current build: 0.2.0-alpha.1 — local cinematic preview.**
+**Current build: 0.2.0-alpha.2 — local cinematic preview.**
 
-PairedAnimations is a client-side project for multiplayer paired dances using vanilla player models, with local cinematic cameras and richer limb animation on modded clients.
+Client-side paired-animations prototype based on the vanilla Steve/Alex body model. The previous `0.2.0-alpha.1` has a **startup crash on 26.2** because its camera mixin targeted the removed `Camera.setup` method. **Alpha.2 fixes this by injecting into `Camera.update(DeltaTracker)`**.
 
 ## Requirements
 
-- Minecraft **26.2** (not 1.21.11).
-- Fabric Loader **0.19.5+** and Fabric API for **26.2**.
-- **Java 25**.
-- To build: Gradle **9.7.1**, or download the successful **PairedAnimations-26.2-alpha** artifact from GitHub Actions.
+- Minecraft **26.2** (not 1.21.11)
+- Fabric Loader **0.19.5+**, Fabric API for Minecraft **26.2**
+- Java **25**
 
-## Prototype controls
+## How to test
 
-1. Join a world with another player and stand within **6 blocks**.
-2. Press **K** to launch a **16-second** orbit-camera preview containing both players.
-3. Press **K** again to stop. Camera perspective is restored at the end, when the other player disappears, or on world change.
+1. Install the new `PairedAnimations-26.2-alpha` artifact from a successful build in GitHub Actions, using only the main JAR, not the sources JAR.
+2. Launch Minecraft 26.2. If it opens the title screen without a `pairedanimations.mixins.json:CameraMixin` error, the startup regression is resolved.
+3. Stand within **6 blocks** of another player in the same world.
+4. Press **K** to start the **16-second** orbit-camera preview. Press **K** again to stop.
+5. Check that both avatars are visible, your perspective is restored afterward, and the other player's camera does not unexpectedly change.
 
-The preview applies tango-inspired arm, leg, torso, and head poses to the two player models **rendered by your own client**. It does **not** animate actual movement, synchronize the other client's camera, send dance packets, or show custom poses to vanilla spectators yet. This remains a local test, not the finished tango.
+The preview applies tango-inspired arm, leg, torso, and head poses to the two player models **rendered locally**. It does not yet synchronize the second client or transmit custom animation to vanilla spectators, nor does it move actual player positions.
 
 ## Roadmap
 
-1. Complete 26.2 runtime camera/model testing (including classic/SLIM model and nearby geometry).
-2. Partner invitations, consent and external session sync (no modifications to the target Minecraft server).
-3. Same choreography timeline and cinematic cameras on both modded clients.
-4. Vanilla-visible regular Minecraft walking/turning/crouching movements, validated against the server's movement rules.
-5. Additional dances and reusable choreographic editor.
+1. Runtime tests on 26.2, especially camera frustum/collision and Steve/SLIM skins.
+2. Partner invitations with consent and an external timing/sync channel.
+3. A shared choreography timeline and local cinematic cameras on both clients.
+4. Vanilla-visible legal walking/turning/crouching movement confirmed by the game server.
+5. More dances and a choreography editor.
 
-### Developer build
+## Building
 
-Run `gradle build` using **JDK 25** and Gradle 9.7.1. The CI workflow runs the exact same build. Install the generated main JAR from `build/libs` (not the sources JAR) in your Fabric 26.2 client alongside Fabric API.
+Requires Java 25 and Gradle 9.7.1. Run `gradle build`, or use GitHub Actions build artifacts.
 
-This branch replaces the 1.21.11 target. The original prototype is preserved on `feature/cinematic-tango-prototype`.
-
-## Technical notes
-
-Minecraft 26.2 ships with unobfuscated Mojang names. This project uses `net.fabricmc.fabric-loom` (not `fabric-loom-remap`) and intentionally has no `mappings` declaration. The camera and model hooks avoid raw OpenGL to stay compatible with the optional Vulkan backend.
+The original 1.21.11 source remains in `feature/cinematic-tango-prototype`.
 
 License: MIT.
