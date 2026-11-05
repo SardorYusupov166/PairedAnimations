@@ -14,7 +14,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /**
  * Minecraft 26.2 no longer has Camera.setup(Level, Entity, ...).
  * Camera.update(DeltaTracker) recalculates the vanilla camera every frame.
- * Override only the local rendering camera after that vanilla update.\n * Vanilla 26.2 has setRotation(yaw, pitch); the 3-float overload is a NeoForge patch.
+ * Override only the local rendering camera after that vanilla update.
+ * Vanilla 26.2 has setRotation(yaw, pitch); the 3-float overload is a NeoForge patch.
  */
 @Mixin(Camera.class)
 public abstract class CameraMixin {
