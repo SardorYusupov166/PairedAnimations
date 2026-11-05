@@ -9,10 +9,12 @@ import net.minecraft.world.phys.Vec3;
 import java.util.UUID;
 
 /**
- * Camera and vanilla-body animation timeline on a single client. Does not
- * physically move players or send packets to the Minecraft game server.
+ * Both modded participants follow the same real-time choreography. Each
+ * client moves only its own player through normal Minecraft keyboard input.
+ * The camera and detailed limb poses are cosmetic and client-side.
  */
 public final class CinematicSession {
+    private final TangoMovement movement = new TangoMovement();
     private UUID localPlayerId;
     private UUID partnerId;
     private ClientLevel originLevel;
@@ -25,7 +27,7 @@ public final class CinematicSession {
         return partnerId != null;
     }
 
-    /** Legacy solo preview: animates both visible players on this client only. */
+    /** Local preview moves only this player; the nearby partner stays still. */
     public void start(Minecraft client, Player partner) {
         schedule(client, partner, true, 0);
     }
@@ -49,6 +51,7 @@ public final class CinematicSession {
         if (client.level != originLevel || client.player == null
             || !client.player.getUUID().equals(localPlayerId)
             || !client.player.isAlive() || partner == null || !partner.isAlive()
+            || client.screen != null
             || client.player.distanceToSqr(partner) > 16 * 16
             || elapsedTicks() >= TangoTimeline.DURATION_TICKS) {
             stop(client);
@@ -58,9 +61,13 @@ public final class CinematicSession {
             cameraSwitched = true;
             client.options.setCameraType(CameraType.THIRD_PERSON_BACK);
         }
+        if (cameraSwitched && !movement.tick(client, partner, localIsLeader, elapsedTicks())) {
+            stop(client);
+        }
     }
 
     public void stop(Minecraft client) {
+        movement.stop(client);  // release all synthetic keys even on disconnect
         if (!isActive()) return;
         partnerId = null;
         localPlayerId = null;

@@ -1,61 +1,42 @@
 # PairedAnimations — Minecraft 26.2 / Fabric
 
-**Experimental build: 0.3.0-alpha.1.** Java 25 · Fabric Loader 0.19.5+ · Fabric API for 26.2.
+**Experimental build 0.4.0-alpha.1** · Java 25 · Fabric Loader 0.19.5+ · Fabric API for 26.2.
 
-An experimental paired dance mod with a 16-second tango-inspired vanilla-player pose animation and a two-player cinematic camera.
+PairedAnimations is an experimental paired tango mod. This version adds **real, small walking/turning steps** to the existing 16-second synchronized client-side animation and cinematic camera.
 
-## What works
+## What changed in 0.4.0-alpha.1
 
-- **K** near another player (within 6 blocks): start a local cinematic preview when no external relay is configured.
-- When a relay is configured and connected, **K** sends a tango invitation to the nearest player (both need the mod).
-- **J** accepts an incoming invitation; **N** declines it.
-- After acceptance, both clients are given the same start timestamp, a three-second countdown, local rotating cinematic cameras, and complementary limb/torso/head poses.
-- Third-party viewers who also have PairedAnimations installed and are connected to the same relay see the two dancers' **full local pose animations** without camera changes.
-- **K** during a scene cancels and restores the previous camera. The scene also stops if the partner leaves or the dance ends.
-- A local Minecraft 26.2 instance starts without the earlier CameraMixin crash (startup smoke test on 0.2.0-alpha.2).
+- **Real vanilla player movement:** the mod presses ordinary movement key bindings for its own local player. The Minecraft server receives normal movement updates, so nearby unmodified clients can see walking and turning.
+- A conservative 16-second footwork sequence: approach, retreat, side step, counter-step, finish. Maximum offset from the start is under one block.
+- The local player turns toward the partner during the steps. The cinematic camera remains client-only.
+- With a connected relay and accepted invitation, **both participants perform matching world-space steps** from the shared start time. Without a relay, K runs a **one-person motion preview**; the partner is stationary on their own client.
+- Safety stops movement and restores camera on K, on world/partner disconnect, when a GUI opens, when leaving ground, when moving near an edge, when blocked, and on large server position corrections. It releases any synthetic movement keys on stop.
 
-## What is NOT implemented yet
+## Important limits
 
-- **No automatically choreographed real walking/turning/crouching packets** have been added. Players without the mod **do not** see a real synchronized dance, just the ordinary game avatars and their actual actions.
-- This first tango is a test pose sequence, not motion-captured choreography. Character positions do not move.
-- End-to-end two-machine in-game tests (camera perspectives, custom model poses, concurrent movement) are not yet complete.
-- Relay uses a private, unauthenticated prototype protocol. The server trusts the self-declared UUID; do not expose a public relay without proper identity validation and anti-abuse controls.
+- This is still a **prototype tango** rather than an advanced realistic duet. Viewers without the mod see only real vanilla steps and turns, **not** custom arm/leg poses. Modded viewers attached to the same relay see detailed limb poses.
+- Only the participant's own mod controls their character; no modded client can force a nearby unmodded player to dance.
+- Minecraft-server movement/anti-cheat rules remain authoritative. Test on flat solid ground in a safe area with at least two blocks of spacing, and no items / mobs / edges close to the players.
+- Movement keys are temporarily controlled by the mod during the scene. Press **K** to cancel. For best results release WASD before starting. Do not start in water, midair or while riding.
+- The external relay prototype is not account-authenticated. Only use a private trusted relay.
 
-## Enabling invitations with an external relay
+## How to test
 
-The Minecraft server itself does **not** need a plugin, but the two modded clients **do need to reach the same separate WebSocket relay**.
+1. Install the main JAR from GitHub Actions, Fabric Loader and Fabric API for **Minecraft 26.2**, Java 25.
+2. Stand near another player on a wide, flat safe surface. Leave 2–4 blocks between you.
+3. Without relay: press **K** to test **your own character's** actual steps; the other player stays still.
+4. With both clients connected to the **same trusted relay**: inviter presses **K**; partner accepts with **J**; 3-second countdown then both players perform the steps. **N** declines.
+5. Observe from an ordinary (unmodded) Minecraft client: walking and rotation should be visible, while custom poses will not.
+6. Stop anytime with **K**; verify that the camera and movement keys return to normal.
 
-1. Install the client JAR, Fabric Loader and Fabric API for Minecraft 26.2 on both PCs.
-2. On one trusted machine, start the included `relay/` service using **Node.js 20+**:
+### Relay configuration
 
-   ```bash
-   cd relay
-   npm install
-   npm test
-   npm start
-   ```
+The Minecraft server needs **no plugin**. To pair players on different PCs, run the included `relay/` Node.js service (Node 20+) on a trusted separate host, and write the same relay `wss://...` URL to `config/pairedanimations-relay.txt` on each client. Restart Minecraft. Refer to [relay/README.md](relay/README.md) for security constraints.
 
-3. Set `config/pairedanimations-relay.txt` on each Minecraft client to the SAME URL on a line by itself. For a same-computer test, use `ws://127.0.0.1:8765`. For different PCs, deploy the relay behind TLS and use `wss://your-relay-domain` (requires hosting/network setup).
-4. Restart Minecraft after editing the config file. In chat, each client should report a successful relay connection.
-5. Both players join the **same Minecraft server address**, stand within 6 blocks, and use **K → J**.
+### Build and CI
 
-The relay transmits only invitations, accept/decline, start/cancel and clock synchronization. It does not change Minecraft-server settings or bypass anti-cheat. See [relay/README.md](relay/README.md) for operational and security limits.
+Java 25 · Gradle 9.7.1: `gradle build`. CI also runs relay tests and a graphical client startup smoke test. A green CI build does **not** replace manual in-world verification of tango movement and sync.
 
-## Build and CI
-
-- Requires JDK 25, Gradle 9.7.1: `gradle build`
-- Node.js 20+ for relay tests: `cd relay && npm install && npm test`
-- GitHub Actions builds the JAR, tests the relay, and runs a Minecraft title-screen startup smoke test on a virtual display.
-
-Download the main JAR (not `-sources.jar`) from the successful **Build Fabric mod** workflow artifact `PairedAnimations-26.2-alpha`.
-
-## Next development milestones
-
-1. Validate both clients in-game and harden relay account identity/hosted service setup.
-2. Animate **actual movement** within the rules of the Minecraft server, so vanilla spectators can see the choreography.
-3. Synchronize a richer keyframed tango, camera transitions, collision checks and player movement cancellation.
-4. Add a dance selection menu and choreography editor.
-
-The previous source for Minecraft 1.21.11 remains available in `feature/cinematic-tango-prototype`.
+The original 1.21.11 code is preserved in `feature/cinematic-tango-prototype`.
 
 License: MIT.
