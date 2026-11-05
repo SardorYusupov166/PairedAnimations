@@ -51,7 +51,7 @@ public final class CinematicSession {
         if (client.level != originLevel || client.player == null
             || !client.player.getUUID().equals(localPlayerId)
             || !client.player.isAlive() || partner == null || !partner.isAlive()
-            || client.screen != null
+            || client.gui.screen() != null
             || client.player.distanceToSqr(partner) > 16 * 16
             || elapsedTicks() >= TangoTimeline.DURATION_TICKS) {
             stop(client);
