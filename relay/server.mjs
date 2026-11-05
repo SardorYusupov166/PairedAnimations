@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { WebSocketServer, WebSocket } from 'ws';
 
 const ID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
@@ -54,6 +56,8 @@ export function createRelayServer({ host = '127.0.0.1', port = 8765 } = {}) {
   wss.on('connection', socket => {
     socket.identity = null;
     socket.lastInvite = 0;
+    socket.isAlive = true;
+    socket.on('pong', () => { socket.isAlive = true; });
     socket.on('message', raw => {
       let data;
       try { data = JSON.parse(raw.toString()); } catch { error(socket, 'invalid_json'); return; }
@@ -151,6 +155,18 @@ export function createRelayServer({ host = '127.0.0.1', port = 8765 } = {}) {
     socket.on('error', () => {});
   });
 
+  const heartbeat = setInterval(() => {
+    for (const peer of wss.clients) {
+      if (!peer.isAlive) {
+        peer.terminate();
+      } else {
+        peer.isAlive = false;
+        peer.ping();
+      }
+    }
+  }, 15_000);
+  heartbeat.unref();
+
   const cleanup = setInterval(() => {
     for (const [id, pending] of invitations) {
       if (pending.expiresAt <= Date.now()) {
@@ -162,11 +178,14 @@ export function createRelayServer({ host = '127.0.0.1', port = 8765 } = {}) {
   }, 1_000);
   cleanup.unref();
 
-  wss.on('close', () => clearInterval(cleanup));
+  wss.on('close', () => {
+    clearInterval(cleanup);
+    clearInterval(heartbeat);
+  });
   return wss;
 }
 
-if (process.argv[1] && import.meta.url === new URL('file://' + process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   const port = Number(process.env.PAIRED_RELAY_PORT || 8765);
   const host = process.env.PAIRED_RELAY_HOST || '127.0.0.1';
   createRelayServer({ host, port }).on('listening', () => {
