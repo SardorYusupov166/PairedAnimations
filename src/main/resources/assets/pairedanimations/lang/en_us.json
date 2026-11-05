@@ -1,0 +1,8 @@
+{
+  "key.category.pairedanimations.main": "PairedAnimations",
+  "key.pairedanimations.preview": "Start / stop tango preview",
+  "message.pairedanimations.start": "Tango camera preview started (K to stop).",
+  "message.pairedanimations.stop": "Tango camera preview ended.",
+  "message.pairedanimations.no_partner": "No player within 6 blocks. Stand near another player.",
+  "message.pairedanimations.preview_only": "Local prototype only: no synchronized dance or server movement yet."
+}

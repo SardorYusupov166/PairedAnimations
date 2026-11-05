@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "pairedanimations",
+  "version": "${version}",
+  "name": "PairedAnimations",
+  "description": "Client-side cinematic paired animation experiments.",
+  "authors": ["mlpgod"],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "dev.sardoryusupov.pairedanimations.PairedAnimationsClient"
+    ]
+  },
+  "mixins": [
+    "pairedanimations.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.18.2",
+    "minecraft": "1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
