@@ -1,10 +1,10 @@
 {
   "key.category.pairedanimations.main": "PairedAnimations",
-  "key.pairedanimations.preview": "Пригласить на танго / остановить предпросмотр",
-  "key.pairedanimations.accept": "Принять приглашение на танец",
-  "key.pairedanimations.decline": "Отклонить приглашение на танец",
-  "message.pairedanimations.start": "Локальное танго началось: персонаж выполняет реальные шаги (K — остановить).",
+  "key.pairedanimations.preview": "Пригласить на танго / остановить",
+  "key.pairedanimations.accept": "Принять приглашение",
+  "key.pairedanimations.decline": "Отклонить приглашение",
+  "message.pairedanimations.start": "Локальное танго началось (K — остановить).",
   "message.pairedanimations.stop": "Танец завершён.",
   "message.pairedanimations.no_partner": "Нет игрока в радиусе 6 блоков. Подойди к партнёру.",
-  "message.pairedanimations.preview_only": "Без relay двигаешься только ты. Для парного танца настрой relay-сервер."
+  "message.pairedanimations.preview_only": "Приглашения отправляются через /msg без relay-сервера."
 }

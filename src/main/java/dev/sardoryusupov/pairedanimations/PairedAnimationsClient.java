@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -16,6 +17,7 @@ public final class PairedAnimationsClient implements ClientModInitializer {
     public static final CinematicSession CINEMATIC = new CinematicSession();
     public static final SpectatorAnimations SPECTATOR = new SpectatorAnimations();
     private static final PairRelayClient RELAY = new PairRelayClient();
+    private static final ChatPairClient CHAT = new ChatPairClient();
     private static final double MAX_PARTNER_DISTANCE = 6.0D;
     private KeyMapping previewKey;
     private KeyMapping acceptKey;
@@ -45,15 +47,36 @@ public final class PairedAnimationsClient implements ClientModInitializer {
             category
         ));
 
+        // MigosMC /msg is server-formatted. Catch game messages AND
+        // player chat messages (some plugins use signed player chat).
+        // Do not hide protocol messages in this alpha: visible echoes help
+        // confirm format and avoid conflicting with ChatSorter filtering.
+        ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
+            if (!overlay) CHAT.onMessage(Minecraft.getInstance(), message.getString());
+        });
+        ClientReceiveMessageEvents.CHAT.register((message, signed, sender, params, receivedAt) -> {
+            CHAT.onMessage(Minecraft.getInstance(), message.getString());
+        });
+
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             boolean wasActive = CINEMATIC.isActive();
             CINEMATIC.tick(client);
-            if (wasActive && !CINEMATIC.isActive()) RELAY.cancel();
+            if (wasActive && !CINEMATIC.isActive()) {
+                RELAY.cancel();
+                CHAT.cancel(client);
+            }
             SPECTATOR.tick(client);
             RELAY.tick(client);
+            CHAT.tick(client);
             while (previewKey.consumeClick()) togglePreview(client);
-            while (acceptKey.consumeClick()) RELAY.accept(client);
-            while (declineKey.consumeClick()) RELAY.decline(client);
+            while (acceptKey.consumeClick()) {
+                if (RELAY.isReady()) RELAY.accept(client);
+                else CHAT.accept(client);
+            }
+            while (declineKey.consumeClick()) {
+                if (RELAY.isReady()) RELAY.decline(client);
+                else CHAT.decline(client);
+            }
         });
     }
 
@@ -61,10 +84,10 @@ public final class PairedAnimationsClient implements ClientModInitializer {
         if (CINEMATIC.isActive()) {
             CINEMATIC.stop(client);
             RELAY.cancel();
+            CHAT.cancel(client);
             notify(client, "message.pairedanimations.stop");
             return;
         }
-
         if (client.player == null || client.level == null) return;
 
         Player partner = client.level.players().stream()
@@ -79,18 +102,16 @@ public final class PairedAnimationsClient implements ClientModInitializer {
             return;
         }
 
-        if (RELAY.isEnabled()) {
+        if (RELAY.isReady()) {
             RELAY.invite(client, partner);
         } else {
-            CINEMATIC.start(client, partner);
-            notify(client, "message.pairedanimations.start");
-            notify(client, "message.pairedanimations.preview_only");
+            // Default transport: vanilla Minecraft /msg, no external services.
+            CHAT.invite(client, partner);
         }
     }
 
     private static void notify(Minecraft client, String key) {
-        if (client.player != null) {
+        if (client.player != null)
             client.player.sendSystemMessage(Component.translatable(key));
-        }
     }
 }
