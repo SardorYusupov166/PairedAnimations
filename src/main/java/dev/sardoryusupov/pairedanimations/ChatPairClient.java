@@ -114,9 +114,11 @@ public final class ChatPairClient {
             status(client, "Нет входящего приглашения через чат.");
             return;
         }
-        if (hasContext(client)) send(client, incoming.partnerName, 'D', incoming.nonce, 0);
+        if (hasContext(client)) {
+            send(client, incoming.partnerName, incoming.accepted ? 'C' : 'D', incoming.nonce, 0);
+        }
         incoming = null;
-        status(client, "Приглашение отклонено.");
+        status(client, "Приглашение отменено.");
     }
 
     /** Return true only for a correctly parsed incoming PA protocol PM. */
@@ -168,6 +170,10 @@ public final class ChatPairClient {
                 if (outgoing != null && outgoing.matches(senderName, packet.nonce())) {
                     outgoing = null;
                     status(client, "Партнёр отклонил приглашение.");
+                } else if (active != null && active.matches(senderName, packet.nonce())) {
+                    active = null;
+                    PairedAnimationsClient.CINEMATIC.stop(client);
+                    status(client, "Партнёр отменил танец.");
                 }
             }
             case 'C' -> {
