@@ -1,8 +1,10 @@
 {
   "key.category.pairedanimations.main": "PairedAnimations",
-  "key.pairedanimations.preview": "Start / stop tango preview",
-  "message.pairedanimations.start": "Tango camera preview started (K to stop).",
-  "message.pairedanimations.stop": "Tango camera preview ended.",
-  "message.pairedanimations.no_partner": "No player within 6 blocks. Stand near another player.",
-  "message.pairedanimations.preview_only": "Local prototype only: no synchronized dance or server movement yet."
+  "key.pairedanimations.preview": "Invite to tango / stop preview",
+  "key.pairedanimations.accept": "Accept a dance invitation",
+  "key.pairedanimations.decline": "Decline a dance invitation",
+  "message.pairedanimations.start": "Local tango preview started (K to stop).",
+  "message.pairedanimations.stop": "Dance ended.",
+  "message.pairedanimations.no_partner": "No player within 6 blocks. Stand near your partner.",
+  "message.pairedanimations.preview_only": "Local preview only: configure a relay to invite a dance partner."
 }
