@@ -31,6 +31,9 @@ public abstract class PlayerModelMixin extends HumanoidModel<AvatarRenderState> 
         TangoTimeline.PoseFrame pose = PairedAnimationsClient.CINEMATIC.poseFor(
             renderState.id, Minecraft.getInstance()
         );
+        if (pose == null) {
+            pose = PairedAnimationsClient.SPECTATOR.poseFor(renderState.id, Minecraft.getInstance());
+        }
         if (pose == null) return;
 
         leftArm.xRot = pose.leftArmX();

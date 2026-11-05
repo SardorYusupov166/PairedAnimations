@@ -20,12 +20,25 @@ export function createRelayServer({ host = '127.0.0.1', port = 8765 } = {}) {
   const error = (socket, reason) => send(socket, { type: 'error', reason });
   const validId = value => typeof value === 'string' && ID.test(value);
   const validScope = value => typeof value === 'string' && value.length > 0 && value.length <= 160 && /^[a-zA-Z0-9.:_\-]+$/.test(value);
+  const broadcastInScope = (scope, packet, excludedA, excludedB) => {
+    for (const peer of peers.values()) {
+      if (peer === excludedA || peer === excludedB || peer.identity?.scope !== scope) continue;
+      send(peer, packet);
+    }
+  };
   const clearSession = (socket, reason) => {
     const partner = active.get(socket);
     active.delete(socket);
     if (partner) {
       active.delete(partner);
       send(partner, { type: 'cancelled', reason });
+      if (socket.identity && partner.identity) {
+        broadcastInScope(socket.identity.scope, {
+          type: 'spectate_cancel',
+          leader: socket.identity.uuid,
+          follower: partner.identity.uuid
+        }, socket, partner);
+      }
     }
   };
   const clearInvites = socket => {
@@ -115,6 +128,7 @@ export function createRelayServer({ host = '127.0.0.1', port = 8765 } = {}) {
         };
         send(pending.from, common);
         send(socket, common);
+        broadcastInScope(socket.identity.scope, { ...common, type: 'spectate' }, pending.from, socket);
         return;
       }
 

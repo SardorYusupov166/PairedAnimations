@@ -263,6 +263,19 @@ public final class PairRelayClient {
                     targetPlayer = partnerId;
                     message(client, "Танго начнётся через несколько секунд. K — остановить.");
                 }
+                case "spectate" -> {
+                    UUID leader = UUID.fromString(data.get("leader").getAsString());
+                    UUID follower = UUID.fromString(data.get("follower").getAsString());
+                    long localStartAt = data.get("startAt").getAsLong() - serverClockOffsetMillis;
+                    PairedAnimationsClient.SPECTATOR.start(
+                        client, leader, follower, Math.max(0, localStartAt - System.currentTimeMillis())
+                    );
+                }
+                case "spectate_cancel" -> {
+                    UUID leader = UUID.fromString(data.get("leader").getAsString());
+                    UUID follower = UUID.fromString(data.get("follower").getAsString());
+                    PairedAnimationsClient.SPECTATOR.cancel(leader, follower);
+                }
                 case "cancelled" -> {
                     PairedAnimationsClient.CINEMATIC.stop(client);
                     targetPlayer = null;

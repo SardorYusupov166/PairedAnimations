@@ -39,22 +39,28 @@ test('mutual invitation starts both clients at same time', async () => {
     const port = wss.address().port;
     const a = await connect(port, A);
     const b = await connect(port, B);
-    sockets.push(a,b);
+    const c = await connect(port, C);
+    sockets.push(a,b,c);
     const invite = onceMessage(b, 'invite');
     a.send(JSON.stringify({ type: 'invite', to: B, dance: 'tango' }));
     const incoming = await invite;
     assert.equal(incoming.from, A);
     const startA = onceMessage(a, 'start');
     const startB = onceMessage(b, 'start');
+    const spectator = onceMessage(c, 'spectate');
     b.send(JSON.stringify({ type: 'accept', inviteId: incoming.inviteId }));
-    const [sa, sb] = await Promise.all([startA, startB]);
+    const [sa, sb, sc] = await Promise.all([startA, startB, spectator]);
     assert.equal(sa.startAt, sb.startAt);
+    assert.equal(sc.startAt, sa.startAt);
+    assert.equal(sc.leader, A);
     assert.equal(sa.leader, A);
     assert.equal(sa.follower, B);
     assert.ok(sa.startAt >= sa.serverNow + 2500);
     const cancelled = onceMessage(a, 'cancelled');
+    const spectatorCancelled = onceMessage(c, 'spectate_cancel');
     b.send(JSON.stringify({ type: 'cancel' }));
     assert.equal((await cancelled).reason, 'cancelled');
+    assert.ok((await spectatorCancelled).leader);
   } finally {
     await closeServer(wss, sockets);
   }

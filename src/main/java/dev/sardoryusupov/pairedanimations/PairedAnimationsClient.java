@@ -14,6 +14,7 @@ import java.util.Comparator;
 
 public final class PairedAnimationsClient implements ClientModInitializer {
     public static final CinematicSession CINEMATIC = new CinematicSession();
+    public static final SpectatorAnimations SPECTATOR = new SpectatorAnimations();
     private static final PairRelayClient RELAY = new PairRelayClient();
     private static final double MAX_PARTNER_DISTANCE = 6.0D;
     private KeyMapping previewKey;
@@ -45,7 +46,10 @@ public final class PairedAnimationsClient implements ClientModInitializer {
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            boolean wasActive = CINEMATIC.isActive();
             CINEMATIC.tick(client);
+            if (wasActive && !CINEMATIC.isActive()) RELAY.cancel();
+            SPECTATOR.tick(client);
             RELAY.tick(client);
             while (previewKey.consumeClick()) togglePreview(client);
             while (acceptKey.consumeClick()) RELAY.accept(client);
