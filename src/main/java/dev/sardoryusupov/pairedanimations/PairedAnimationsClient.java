@@ -14,8 +14,11 @@ import java.util.Comparator;
 
 public final class PairedAnimationsClient implements ClientModInitializer {
     public static final CinematicSession CINEMATIC = new CinematicSession();
+    private static final PairRelayClient RELAY = new PairRelayClient();
     private static final double MAX_PARTNER_DISTANCE = 6.0D;
     private KeyMapping previewKey;
+    private KeyMapping acceptKey;
+    private KeyMapping declineKey;
 
     @Override
     public void onInitializeClient() {
@@ -28,18 +31,32 @@ public final class PairedAnimationsClient implements ClientModInitializer {
             InputConstants.KEY_K,
             category
         ));
+        acceptKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+            "key.pairedanimations.accept",
+            InputConstants.Type.KEYSYM,
+            InputConstants.KEY_J,
+            category
+        ));
+        declineKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+            "key.pairedanimations.decline",
+            InputConstants.Type.KEYSYM,
+            InputConstants.KEY_N,
+            category
+        ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             CINEMATIC.tick(client);
-            while (previewKey.consumeClick()) {
-                togglePreview(client);
-            }
+            RELAY.tick(client);
+            while (previewKey.consumeClick()) togglePreview(client);
+            while (acceptKey.consumeClick()) RELAY.accept(client);
+            while (declineKey.consumeClick()) RELAY.decline(client);
         });
     }
 
     private static void togglePreview(Minecraft client) {
         if (CINEMATIC.isActive()) {
             CINEMATIC.stop(client);
+            RELAY.cancel();
             notify(client, "message.pairedanimations.stop");
             return;
         }
@@ -58,9 +75,13 @@ public final class PairedAnimationsClient implements ClientModInitializer {
             return;
         }
 
-        CINEMATIC.start(client, partner);
-        notify(client, "message.pairedanimations.start");
-        notify(client, "message.pairedanimations.preview_only");
+        if (RELAY.isEnabled()) {
+            RELAY.invite(client, partner);
+        } else {
+            CINEMATIC.start(client, partner);
+            notify(client, "message.pairedanimations.start");
+            notify(client, "message.pairedanimations.preview_only");
+        }
     }
 
     private static void notify(Minecraft client, String key) {
