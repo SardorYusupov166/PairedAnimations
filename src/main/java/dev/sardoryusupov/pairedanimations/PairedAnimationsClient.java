@@ -88,6 +88,7 @@ public final class PairedAnimationsClient implements ClientModInitializer {
             notify(client, "message.pairedanimations.stop");
             return;
         }
+        if (CHAT.cancelPending(client)) return;
         if (client.player == null || client.level == null) return;
 
         Player partner = client.level.players().stream()
