@@ -37,7 +37,18 @@ jobs:
           status=$?
           set -e
           echo "Gradle exit status: $status"
-          tail -n 130 client-startup.log || true
+          echo '=== Minecraft startup: first 130 lines ==='
+          head -n 130 client-startup.log || true
+          echo '=== Errors in launcher log ==='
+          grep -Ein 'Caused by|Exception|Mixin apply|Critical injection|GLFW|Unable to|error:' client-startup.log | head -n 80 || true
+          echo '=== Crash report excerpt ==='
+          for report in run/crash-reports/crash-*.txt; do
+            if [[ -f "$report" ]]; then
+              head -n 130 "$report"
+            fi
+          done
+          echo '=== Minecraft startup: last 25 lines ==='
+          tail -n 25 client-startup.log || true
           # Any early crash or mixin target mismatch fails.
           if grep -Eiq 'Mixin apply for mod pairedanimations failed|Critical injection failure|Exception in thread.*main|Minecraft has crashed|Game crashed' client-startup.log; then
             echo "Client startup crashed" >&2
