@@ -35,6 +35,7 @@ public final class SpectatorAnimations {
 
     public void cancel(UUID leader, UUID follower) {
         sessions.remove(key(leader, follower));
+        sessions.remove(key(follower, leader));
     }
 
     public void tick(Minecraft client) {

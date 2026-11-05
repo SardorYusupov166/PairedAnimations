@@ -1,37 +1,61 @@
-# PairedAnimations — Minecraft 26.2 (Fabric)
+# PairedAnimations — Minecraft 26.2 / Fabric
 
-**Current build: 0.2.0-alpha.2 — local cinematic preview.**
+**Experimental build: 0.3.0-alpha.1.** Java 25 · Fabric Loader 0.19.5+ · Fabric API for 26.2.
 
-Client-side paired-animations prototype based on the vanilla Steve/Alex body model. The previous `0.2.0-alpha.1` has a **startup crash on 26.2** because its camera mixin targeted the removed `Camera.setup` method. **Alpha.2 fixes this by injecting into `Camera.update(DeltaTracker)`**.
+An experimental paired dance mod with a 16-second tango-inspired vanilla-player pose animation and a two-player cinematic camera.
 
-## Requirements
+## What works
 
-- Minecraft **26.2** (not 1.21.11)
-- Fabric Loader **0.19.5+**, Fabric API for Minecraft **26.2**
-- Java **25**
+- **K** near another player (within 6 blocks): start a local cinematic preview when no external relay is configured.
+- When a relay is configured and connected, **K** sends a tango invitation to the nearest player (both need the mod).
+- **J** accepts an incoming invitation; **N** declines it.
+- After acceptance, both clients are given the same start timestamp, a three-second countdown, local rotating cinematic cameras, and complementary limb/torso/head poses.
+- Third-party viewers who also have PairedAnimations installed and are connected to the same relay see the two dancers' **full local pose animations** without camera changes.
+- **K** during a scene cancels and restores the previous camera. The scene also stops if the partner leaves or the dance ends.
+- A local Minecraft 26.2 instance starts without the earlier CameraMixin crash (startup smoke test on 0.2.0-alpha.2).
 
-## How to test
+## What is NOT implemented yet
 
-1. Install the new `PairedAnimations-26.2-alpha` artifact from a successful build in GitHub Actions, using only the main JAR, not the sources JAR.
-2. Launch Minecraft 26.2. If it opens the title screen without a `pairedanimations.mixins.json:CameraMixin` error, the startup regression is resolved.
-3. Stand within **6 blocks** of another player in the same world.
-4. Press **K** to start the **16-second** orbit-camera preview. Press **K** again to stop.
-5. Check that both avatars are visible, your perspective is restored afterward, and the other player's camera does not unexpectedly change.
+- **No automatically choreographed real walking/turning/crouching packets** have been added. Players without the mod **do not** see a real synchronized dance, just the ordinary game avatars and their actual actions.
+- This first tango is a test pose sequence, not motion-captured choreography. Character positions do not move.
+- End-to-end two-machine in-game tests (camera perspectives, custom model poses, concurrent movement) are not yet complete.
+- Relay uses a private, unauthenticated prototype protocol. The server trusts the self-declared UUID; do not expose a public relay without proper identity validation and anti-abuse controls.
 
-The preview applies tango-inspired arm, leg, torso, and head poses to the two player models **rendered locally**. It does not yet synchronize the second client or transmit custom animation to vanilla spectators, nor does it move actual player positions.
+## Enabling invitations with an external relay
 
-## Roadmap
+The Minecraft server itself does **not** need a plugin, but the two modded clients **do need to reach the same separate WebSocket relay**.
 
-1. Runtime tests on 26.2, especially camera frustum/collision and Steve/SLIM skins.
-2. Partner invitations with consent and an external timing/sync channel.
-3. A shared choreography timeline and local cinematic cameras on both clients.
-4. Vanilla-visible legal walking/turning/crouching movement confirmed by the game server.
-5. More dances and a choreography editor.
+1. Install the client JAR, Fabric Loader and Fabric API for Minecraft 26.2 on both PCs.
+2. On one trusted machine, start the included `relay/` service using **Node.js 20+**:
 
-## Building
+   ```bash
+   cd relay
+   npm install
+   npm test
+   npm start
+   ```
 
-Requires Java 25 and Gradle 9.7.1. Run `gradle build`, or use GitHub Actions build artifacts.
+3. Set `config/pairedanimations-relay.txt` on each Minecraft client to the SAME URL on a line by itself. For a same-computer test, use `ws://127.0.0.1:8765`. For different PCs, deploy the relay behind TLS and use `wss://your-relay-domain` (requires hosting/network setup).
+4. Restart Minecraft after editing the config file. In chat, each client should report a successful relay connection.
+5. Both players join the **same Minecraft server address**, stand within 6 blocks, and use **K → J**.
 
-The original 1.21.11 source remains in `feature/cinematic-tango-prototype`.
+The relay transmits only invitations, accept/decline, start/cancel and clock synchronization. It does not change Minecraft-server settings or bypass anti-cheat. See [relay/README.md](relay/README.md) for operational and security limits.
+
+## Build and CI
+
+- Requires JDK 25, Gradle 9.7.1: `gradle build`
+- Node.js 20+ for relay tests: `cd relay && npm install && npm test`
+- GitHub Actions builds the JAR, tests the relay, and runs a Minecraft title-screen startup smoke test on a virtual display.
+
+Download the main JAR (not `-sources.jar`) from the successful **Build Fabric mod** workflow artifact `PairedAnimations-26.2-alpha`.
+
+## Next development milestones
+
+1. Validate both clients in-game and harden relay account identity/hosted service setup.
+2. Animate **actual movement** within the rules of the Minecraft server, so vanilla spectators can see the choreography.
+3. Synchronize a richer keyframed tango, camera transitions, collision checks and player movement cancellation.
+4. Add a dance selection menu and choreography editor.
+
+The previous source for Minecraft 1.21.11 remains available in `feature/cinematic-tango-prototype`.
 
 License: MIT.
