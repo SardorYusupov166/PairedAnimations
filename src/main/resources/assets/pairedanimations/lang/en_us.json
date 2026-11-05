@@ -3,8 +3,8 @@
   "key.pairedanimations.preview": "Invite to tango / stop preview",
   "key.pairedanimations.accept": "Accept a dance invitation",
   "key.pairedanimations.decline": "Decline a dance invitation",
-  "message.pairedanimations.start": "Local tango preview started (K to stop).",
+  "message.pairedanimations.start": "Local tango started: your character now performs real steps (K to stop).",
   "message.pairedanimations.stop": "Dance ended.",
   "message.pairedanimations.no_partner": "No player within 6 blocks. Stand near your partner.",
-  "message.pairedanimations.preview_only": "Local preview only: configure a relay to invite a dance partner."
+  "message.pairedanimations.preview_only": "Without a relay only you move. Configure the relay for synchronized paired movement."
 }

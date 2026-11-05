@@ -3,8 +3,8 @@
   "key.pairedanimations.preview": "Пригласить на танго / остановить предпросмотр",
   "key.pairedanimations.accept": "Принять приглашение на танец",
   "key.pairedanimations.decline": "Отклонить приглашение на танец",
-  "message.pairedanimations.start": "Локальный предпросмотр танго запущен (K — остановить).",
+  "message.pairedanimations.start": "Локальное танго началось: персонаж выполняет реальные шаги (K — остановить).",
   "message.pairedanimations.stop": "Танец завершён.",
   "message.pairedanimations.no_partner": "Нет игрока в радиусе 6 блоков. Подойди к партнёру.",
-  "message.pairedanimations.preview_only": "Локальный прототип: для приглашения партнёра настрой relay-сервер."
+  "message.pairedanimations.preview_only": "Без relay двигаешься только ты. Для парного танца настрой relay-сервер."
 }
