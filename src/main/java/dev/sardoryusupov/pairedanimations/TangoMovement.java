@@ -27,7 +27,7 @@ public final class TangoMovement {
 
     public boolean tick(Minecraft client, Player partner, boolean leader, float tick) {
         LocalPlayer player = client.player;
-        if (player == null || client.level == null || partner == null || client.screen != null) {
+        if (player == null || client.level == null || partner == null || client.gui.screen() != null) {
             stop(client);
             return false;
         }
