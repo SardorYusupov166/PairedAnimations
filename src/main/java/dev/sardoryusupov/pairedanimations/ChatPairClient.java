@@ -73,9 +73,28 @@ public final class ChatPairClient {
             + " через /msg. Ожидаем ответ.");
     }
 
+    /** K can cancel an outstanding chat invite before the dance begins. */
+    public boolean cancelPending(Minecraft client) {
+        if (outgoing != null) {
+            if (hasContext(client)) send(client, outgoing.partnerName, 'C', outgoing.nonce, 0);
+            outgoing = null;
+            status(client, "Приглашение отменено.");
+            return true;
+        }
+        if (incoming != null) {
+            decline(client);
+            return true;
+        }
+        return false;
+    }
+
     public void accept(Minecraft client) {
         if (!hasContext(client) || incoming == null) {
             status(client, "Нет входящего приглашения через чат.");
+            return;
+        }
+        if (incoming.accepted) {
+            status(client, "Приглашение уже принято. Ожидаем старт.");
             return;
         }
         Player partner = findPlayer(client, incoming.partnerName);
@@ -114,7 +133,7 @@ public final class ChatPairClient {
         switch (packet.operation()) {
             case 'I' -> {
                 if (!validPartner(client, sender) || outgoing != null || active != null
-                    || PairedAnimationsClient.CINEMATIC.isActive()) return true;
+                    || incoming != null || PairedAnimationsClient.CINEMATIC.isActive()) return true;
                 incoming = new Invitation(senderName, packet.nonce(), now + INVITE_TTL_MS);
                 status(client, senderName + " приглашает тебя на танго. J — принять, N — отказаться.");
             }
@@ -200,7 +219,7 @@ public final class ChatPairClient {
     }
 
     private static void send(Minecraft client, String target, char op, String nonce, long startAt) {
-        if (!hasContext(client)) return;
+        if (!hasContext(client) || !target.matches("[A-Za-z0-9_]{3,16}")) return;
         // All values are validated Minecraft player names / generated tokens.
         client.player.connection.sendCommand(
             "msg " + target + " " + ChatPairProtocol.encode(op, nonce, startAt)
